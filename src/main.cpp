@@ -4,7 +4,8 @@
 
 #include <iostream>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+// Callback for when the framebuffer is resized. We set the viewport again.
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
@@ -43,11 +44,16 @@ int main() {
     // lower left corner x/y and width/height
     glViewport(0, 0, 800, 600);
 
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    // Anytime the user reseizes the window, a callback function is called.
+    // We use that to also adjust the viewport.
+    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
     // Render loop.
+    // glfwWindowShouldClose checks if the window has been instruted to close
     while (!glfwWindowShouldClose(window)) {
+        // 2D color buffer is double buffered. Rendering occurs in one and final output occurs in other.
         glfwSwapBuffers(window);
+        // Check for events (keyboard clicks, mouse movement)
         glfwPollEvents();
     }
 
