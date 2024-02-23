@@ -4,10 +4,14 @@
 
 #include <iostream>
 
+// settings
+constexpr unsigned int SCR_WIDTH = 800;
+constexpr unsigned int SCR_HEIGHT = 600;
+
 // Callback for when the framebuffer is resized. We set the viewport again.
-void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
+void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+
+void processInput(GLFWwindow* window);
 
 int main() {
     glfwInit();
@@ -23,7 +27,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     // Create a window object. Args: width, height, name, ...
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -42,7 +46,7 @@ int main() {
 
     // Tell OpenGL the size of the rendering window.
     // lower left corner x/y and width/height
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
     // Anytime the user reseizes the window, a callback function is called.
     // We use that to also adjust the viewport.
@@ -51,14 +55,30 @@ int main() {
     // Render loop.
     // glfwWindowShouldClose checks if the window has been instruted to close
     while (!glfwWindowShouldClose(window)) {
-        // 2D color buffer is double buffered. Rendering occurs in one and final output occurs in other.
+        processInput(window);
+
+        // Render
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);  // All options: GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT and GL_STENCIL_BUFFER_BIT
+        // glClearColor function is a state-setting function and glClear is a state-using function in that it uses the current state to retrieve the clearing color from.
+
+        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
-        // Check for events (keyboard clicks, mouse movement)
         glfwPollEvents();
     }
 
-    // Clean GLFW's resources.
+    // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
 
     return 0;
+}
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window) {
+    // glfwGetKey will return GLFW_RELEASE if escape is NOT being pressed
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
