@@ -14,4 +14,4 @@ add_subdirectory(deps/glfw)
 
 add_subdirectory(deps/glad)
 
-add_subdirectory(src)
+add_subdirectory(learn_opengl)
