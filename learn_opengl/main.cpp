@@ -67,26 +67,18 @@ int main() {
         0.0f, 0.5f, 0.0f,
         1.0f, 0.5f, 0.0f};
 
-    // Generate vertex array objects
-    unsigned int vao[2];
-    glGenVertexArrays(2, vao);
+    // Generate vertex array object
+    unsigned int vao;
+    glGenVertexArrays(1, &vao);
 
-    // Generate vertex buffer objects
-    unsigned int vbo[2];
-    glGenBuffers(2, vbo);
+    // Generate vertex buffer object
+    unsigned int vbo;
+    glGenBuffers(1, &vbo);
 
-    glBindVertexArray(vao[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     // Copy vertices from first triangle into first vbo
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle1), triangle1, GL_STATIC_DRAW);
-    // Instruct OpenGL how to interpret vertex data in vbo, and enable
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(vao[1]);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    // Copy vertices from first triangle into first vbo
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle2), triangle2, GL_STATIC_DRAW);
     // Instruct OpenGL how to interpret vertex data in vbo, and enable
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -107,10 +99,7 @@ int main() {
         // glClearColor function is a state-setting function and glClear is a state-using function in that it uses the current state to retrieve the clearing color from.
 
         orangeShader.use();
-        glBindVertexArray(vao[0]);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        yellowShader.use();
-        glBindVertexArray(vao[1]);
+        glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -118,8 +107,8 @@ int main() {
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(2, vao);
-    glDeleteBuffers(2, vbo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
