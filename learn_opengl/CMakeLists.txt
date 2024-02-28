@@ -8,6 +8,7 @@ add_library(
 target_link_libraries(
     ShaderProgram
     PRIVATE glad
+    PRIVATE glm::glm-header-only
 )
 target_include_directories(ShaderProgram PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -26,6 +27,7 @@ target_link_libraries(
     PRIVATE glfw
     PRIVATE glad
     PRIVATE OpenGL::GL
+    PRIVATE glm::glm-header-only
     PRIVATE ShaderProgram
     PRIVATE CubeModel
     )

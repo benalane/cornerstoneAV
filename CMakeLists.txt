@@ -10,8 +10,8 @@ find_package(OpenGL REQUIRED)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(deps/glfw)
-
 add_subdirectory(deps/glad)
-
+add_subdirectory(deps/glm)
 add_subdirectory(learn_opengl)
