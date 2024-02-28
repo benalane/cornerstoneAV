@@ -1,3 +1,5 @@
+add_subdirectory(models)
+
 add_library(
     ShaderProgram STATIC
     ShaderProgram.cpp
@@ -25,6 +27,7 @@ target_link_libraries(
     PRIVATE glad
     PRIVATE OpenGL::GL
     PRIVATE ShaderProgram
+    PRIVATE CubeModel
     )
 
 add_custom_target(run_learn_opengl

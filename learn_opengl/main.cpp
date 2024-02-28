@@ -3,7 +3,9 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+
 #include "ShaderProgram.h"
+#include "cube_model.h"
 
 // settings
 constexpr unsigned int SCR_WIDTH = 800;
@@ -55,17 +57,13 @@ int main() {
     // glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
     // glViewport(0, 0, frameBufferWidth, frameBufferHeight);
 
-    ShaderProgram orangeShader("passthru.vs", "orange.fs");
-    ShaderProgram yellowShader("passthru.vs", "yellow.fs");
+    ShaderProgram projectionShader("projection.vs", "passthru.fs");
 
     float triangle1[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f};
-    float triangle2[] = {
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f,
-        1.0f, 0.5f, 0.0f};
+        // Position (3f), Color (3f)
+        -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f};
 
     // Generate vertex array object
     unsigned int vao;
@@ -80,12 +78,14 @@ int main() {
     // Copy vertices from first triangle into first vbo
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle1), triangle1, GL_STATIC_DRAW);
     // Instruct OpenGL how to interpret vertex data in vbo, and enable
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
+
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Render loop.
@@ -95,8 +95,8 @@ int main() {
 
         // Render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);  // All options: GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT and GL_STENCIL_BUFFER_BIT
         // glClearColor function is a state-setting function and glClear is a state-using function in that it uses the current state to retrieve the clearing color from.
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // All options: GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT and GL_STENCIL_BUFFER_BIT
 
         orangeShader.use();
         glBindVertexArray(vao);
