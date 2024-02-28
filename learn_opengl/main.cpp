@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <iostream>
 
 #include "ShaderProgram.h"
@@ -110,17 +109,17 @@ int main() {
         projectionShader.use();
 
         // create transformations
-        glm::mat4 view          = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 projection    = glm::mat4(1.0f);
+        glm::mat4 view = glm::mat4(1.0f);  // make sure to initialize matrix to identity matrix first
+        glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
         // pass transformation matrices to the shader
-        projectionShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        projectionShader.setMat4("projection", projection);  // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         projectionShader.setMat4("view", view);
 
         // Placeholder for translation;
-        glm::vec3 position = glm::vec3( 0.0f,  0.0f,  0.0f); 
+        glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
         // calculate the model matrix for each object and pass it to shader before drawing
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, position);
