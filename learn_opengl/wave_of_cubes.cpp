@@ -100,10 +100,25 @@ int main() {
     // glfwWindowShouldClose checks if the window has been instruted to close
 
     float scale = 0.25;
-    float decay = 0.9;
-    constexpr unsigned int numBars = 100;
+    float decay = 0.99;
+    constexpr unsigned int numBars = 1000;
+    constexpr unsigned int delay = 10;
     std::vector<float> heights;
-    heights.resize(numBars);
+    heights.resize(numBars * delay);
+
+    std::vector<unsigned int> heightIndices;
+    heightIndices.resize(numBars);
+
+    std::vector<float> decayFactors;
+    decayFactors.resize(numBars);
+
+    // Initial indices and rates;
+    heightIndices[0] = 0;
+    decayFactors[0] = 1;
+    for (int i = 1; i < heightIndices.size(); i++) {
+        heightIndices[i] = delay * (heightIndices.size() - i);
+        decayFactors[i] = decay * decayFactors[i - 1];
+    }
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
@@ -127,18 +142,21 @@ int main() {
         projectionShader.setMat4("view", view);
 
         float cTime = glfwGetTime();
-        heights[0] = abs(sin(cTime) + sin(cTime*3) + sin(cTime*0.7) + sin(cTime*2.1));
-
-        for (auto heightRItr = heights.rbegin(); heightRItr != heights.rend() - 1; ++heightRItr) {
-            *heightRItr = decay * *(heightRItr + 1);
-        }
+        heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime*3) + sin(cTime*0.7) + sin(cTime*2.1));
 
         for (int i = 0; i < numBars; ++i) {
+            float height = heights[heightIndices[i]] * decayFactors[i];
+
+            heightIndices[i] = heightIndices[i] + 1;
+            if (heightIndices[i] >= heights.size()) {
+                heightIndices[i] = 0;
+            }
+
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f);
-            glm::vec3 position = glm::vec3(0.0f, -1.0 + (0.5 * heights[i]), -1 * i * scale);
+            glm::vec3 position = glm::vec3(0.0f, -1.0 + (0.5 * height), -1 * i * scale);
             model = glm::translate(model, position);
-            model = glm::scale(model, glm::vec3(scale, heights[i], scale));
+            model = glm::scale(model, glm::vec3(scale, height, scale));
             projectionShader.setMat4("model", model);
             glBindVertexArray(vao);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
