@@ -96,13 +96,34 @@ int main() {
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // Render loop.
-    // glfwWindowShouldClose checks if the window has been instruted to close
+
 
     float scale = 0.25;
     float decay = 0.99;
     constexpr unsigned int numBars = 1000;
     constexpr unsigned int delay = 10;
+
+    // Will move this into some OOP principles later. For now... a comment.
+    // heights, heightIndices, and decayFactors allow for the wave of cubes.
+    // heights acts as a circular array. Each measurement is recorded in the array
+    // and loops around to the front once the array is full.
+    // heightIndices holds which element of heights each box will render from
+    // The indices are offset by delay so each box trails it's forward box by delay values
+    // At initialization, the front box is at the head (where the first measurement will be written)
+    // Each subsequent box is then offset by the delay, but must first wrap around to the end of heights
+    //     with 7 boxes and a delay of 2          v--delay--v
+    // | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ | H1 | __ |
+    // | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ | H1 |
+    // | H1 | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ |
+    // | __ | H1 | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 |
+    // The above shows init and 3 subsequen iterations, showing where the indices point ot
+    // Each new value is writted at H0, H0 is then rendered and incremented
+    // Each subsequent box is rendered and its index is incremented
+    // For rendereing, each box is scaled by a decay factor stored in decayFactors
+    // h = a * (1 - r)^t, storing the decay as (1 - r) means that each subsequent box's
+    // decay factor is just the previous box's multiplied by the factor.
+
+
     std::vector<float> heights;
     heights.resize(numBars * delay);
 
@@ -120,6 +141,8 @@ int main() {
         decayFactors[i] = decay * decayFactors[i - 1];
     }
 
+    // Render loop.
+    // glfwWindowShouldClose checks if the window has been instruted to close
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
@@ -142,7 +165,7 @@ int main() {
         projectionShader.setMat4("view", view);
 
         float cTime = glfwGetTime();
-        heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime*3) + sin(cTime*0.7) + sin(cTime*2.1));
+        heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime * 3) + sin(cTime * 0.7) + sin(cTime * 2.1));
 
         for (int i = 0; i < numBars; ++i) {
             float height = heights[heightIndices[i]] * decayFactors[i];
