@@ -63,7 +63,7 @@ int main() {
     // Globals
     glEnable(GL_DEPTH_TEST);
 
-    ShaderProgram projectionShader("projection.vs", "passthru.fs");
+    ShaderProgram projectionShader("shaders/projection.vs", "shaders/passthru.fs");
 
     // Generate vertex array object
     unsigned int vao;
