@@ -147,8 +147,9 @@ int main(int argc, char* argv[]) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    float scale = 0.25;
-    float decay = 0.99;
+    float scaleX = 0.25;
+    float scaleZ = 0.25;
+    float decay = 0.993;
     constexpr unsigned int numBars = 1000;
     constexpr unsigned int delay = 1;
 
@@ -227,7 +228,7 @@ int main(int argc, char* argv[]) {
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        view = glm::rotate(view, 0.5f, glm::vec3(0.25f, 1.0f, 0.0f));
+        view = glm::rotate(view, 0.5f, glm::vec3(0.25f, -1.0f, 0.0f));
 
         // pass transformation matrices to the shader
         projectionShader.setMat4("projection", projection);  // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
@@ -235,7 +236,7 @@ int main(int argc, char* argv[]) {
 
         // float cTime = glfwGetTime();
         // heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime * 3) + sin(cTime * 0.7) + sin(cTime * 2.1));
-        float noramlizedSample = ((float)(left + right)) / (2.0f * SHRT_MAX); 
+        float noramlizedSample = ((0.25 * noramlizedSample) + (((float)(left)) / (SHRT_MAX/4)))/2; 
         heights[heightIndices[0]] = abs(noramlizedSample);
 
         for (int i = 0; i < numBars; ++i) {
@@ -248,9 +249,9 @@ int main(int argc, char* argv[]) {
 
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f);
-            glm::vec3 position = glm::vec3(0.0f, -1.0 + (0.5 * height), -1 * i * scale);
+            glm::vec3 position = glm::vec3(0.0f, -1.0 + (0.5 * height), -1 * i * scaleZ);
             model = glm::translate(model, position);
-            model = glm::scale(model, glm::vec3(scale, height, scale));
+            model = glm::scale(model, glm::vec3(scaleX, height, scaleZ));
             projectionShader.setMat4("model", model);
             glBindVertexArray(vao);
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
