@@ -12,13 +12,14 @@ output_cb(const void* input,
           void* data) {
     SNDFILE* file = (SNDFILE*)data;
 
-    /* this should not actually be done inside of the stream callback
-     * but in an own working thread
-     *
-     * Note although I haven't tested it for stereo I think you have
-     * to multiply frames_per_buffer with the channel count i.e. 2 for
-     * stereo */
-    sf_read_short(file, (short*)output, 2 * frames_per_buffer);
+    // this should not actually be done inside of the stream callback
+    // but in an own working thread
+    sf_count_t readCount = sf_readf_short(file, (short*)output, frames_per_buffer);
+
+    if (readCount == 0) {
+        return paComplete;
+    }
+
     return paContinue;
 }
 
@@ -81,7 +82,9 @@ int main(int argc, char* argv[]) {
         return portAudioError(err);
     }
 
-    Pa_Sleep(100000);
+    while (Pa_IsStreamActive(stream) == 1) {
+        Pa_Sleep(10);
+    }
 
     err = Pa_StopStream(stream);
     if (err != paNoError) {
