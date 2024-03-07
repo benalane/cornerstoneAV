@@ -1,12 +1,15 @@
 #include <glad/glad.h>
 // glad.h must be before glfw3.h
 #include <GLFW/glfw3.h>
+#include <portaudio.h>
+#include <sndfile.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <string>
+#include <climits>
 
 #include "ShaderProgram.h"
 #include "cube_model.h"
@@ -15,19 +18,64 @@
 constexpr unsigned int SCR_WIDTH = 800;
 constexpr unsigned int SCR_HEIGHT = 600;
 
-// Callback for when the framebuffer is resized. We set the viewport again.
-void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+}
 
-void processInput(GLFWwindow* window);
+int portAudioError(const PaError& err) {
+    Pa_Terminate();
+    std::cerr << "An error occurred while using the portaudio stream" << std::endl
+              << "Error number: " << err << std::endl
+              << "Error message: " << Pa_GetErrorText(err) << std::endl;
+    return -1;
+}
+
+void processInput(GLFWwindow* window, PaStream* stream) {
+    bool musicStopped = (Pa_IsStreamActive(stream) != 1);
+    bool windowShouldClose = (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
+
+    if (musicStopped || windowShouldClose) {
+        glfwSetWindowShouldClose(window, true);
+
+        portAudioError(Pa_StopStream(stream));
+    }
+}
+
+// throwing this together with a global
+short left = 0;
+short right = 0;
+
+static int
+output_cb(const void* input,
+          void* output,
+          unsigned long frames_per_buffer,
+          const PaStreamCallbackTimeInfo* time_info,
+          PaStreamCallbackFlags flags,
+          void* data) {
+    SNDFILE* file = (SNDFILE*)data;
+
+    // this should not actually be done inside of the stream callback
+    // but in an own working thread
+    sf_count_t readCount = sf_readf_short(file, (short*)output, frames_per_buffer);
+    left = ((short*)output)[0];
+    right = ((short*)output)[0];
+
+    if (readCount == 0) {
+        return paComplete;
+    }
+
+    return paContinue;
+}
 
 int main(int argc, char* argv[]) {
     // Check correct # of args
-    if (argc != 2) {
+    if (argc != 3) {
         // argv[0] is the program name
-        std::cerr << "Usage: " << argv[0] << " <shader_directory>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <shader_directory> <file_name.wav>" << std::endl;
         return -1;
     }
     std::string shaderDirectory = argv[1];
+    const char* filename = argv[2];
 
     glfwInit();
 
@@ -62,12 +110,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-
-    // Tell OpenGL the size of the rendering window.
-    // lower left corner x/y and width/height
-    // int frameBufferWidth, frameBufferHeight;
-    // glfwGetFramebufferSize(window, &frameBufferWidth, &frameBufferHeight);
-    // glViewport(0, 0, frameBufferWidth, frameBufferHeight);
 
     // Globals
     glEnable(GL_DEPTH_TEST);
@@ -105,35 +147,10 @@ int main(int argc, char* argv[]) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
-
     float scale = 0.25;
     float decay = 0.99;
     constexpr unsigned int numBars = 1000;
-    constexpr unsigned int delay = 10;
-
-    // Will move this into some OOP principles later. For now... a comment.
-    // heights, heightIndices, and decayFactors allow for the wave of cubes.
-    // heights acts as a circular array. Each measurement is recorded in the array
-    // and loops around to the front once the array is full.
-    // heightIndices holds which element of heights each box will render from
-    // The indices are offset by delay so each box trails it's forward box by delay values
-    // At initialization, the front box is at the head (where the first measurement will be written)
-    // Each subsequent box is then offset by the delay, but must first wrap around to the end of heights
-    //     with 7 boxes and a delay of 2          v--delay--v
-    // | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ | H1 | __ |
-    // | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ | H1 |
-    // | H1 | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 | __ |
-    // | __ | H1 | __ | H0 | __ | H6 | __ | H5 | __ | H4 | __ | H3 | __ | H2 |
-    // The above shows init and 3 subsequen iterations, showing where the indices point ot
-    // Each new value is writted at H0, H0 is then rendered and incremented
-    // Each subsequent box is rendered and its index is incremented
-    // For rendereing, each box is scaled by a decay factor stored in decayFactors
-    // h = a * (1 - r)^t, storing the decay as (1 - r) means that each subsequent box's
-    // decay factor is just the previous box's multiplied by the factor.
-
+    constexpr unsigned int delay = 1;
 
     std::vector<float> heights;
     heights.resize(numBars * delay);
@@ -152,10 +169,51 @@ int main(int argc, char* argv[]) {
         decayFactors[i] = decay * decayFactors[i - 1];
     }
 
+    SF_INFO sfinfo;
+    SNDFILE* wavFile = sf_open(filename, SFM_READ, &sfinfo);
+
+    if (wavFile == nullptr) {
+        std::cerr << "Error in sf_open: " << sf_strerror(wavFile) << std::endl;
+        return -1;
+    }
+
+    PaStreamParameters outputParameters;
+    PaStream* stream;
+    PaError err;
+
+    err = Pa_Initialize();
+    if (err != paNoError) {
+        return portAudioError(err);
+    }
+
+    outputParameters.device = Pa_GetDefaultOutputDevice();
+    if (outputParameters.device == paNoDevice) {
+        std::cerr << "Haven't found an audio device!" << std::endl;
+        return -1;
+    }
+
+    outputParameters.channelCount = sfinfo.channels;
+    // TODO: get this from sfinfo.format
+    outputParameters.sampleFormat = paInt16;
+    outputParameters.suggestedLatency = Pa_GetDeviceInfo(outputParameters.device)->defaultLowOutputLatency;
+    outputParameters.hostApiSpecificStreamInfo = nullptr;
+
+    err = Pa_OpenStream(&stream, NULL, &outputParameters, sfinfo.samplerate,
+                        paFramesPerBufferUnspecified, paNoFlag,
+                        output_cb, wavFile);
+    if (err != paNoError) {
+        return portAudioError(err);
+    }
+
+    err = Pa_StartStream(stream);
+    if (err != paNoError) {
+        return portAudioError(err);
+    }
+
     // Render loop.
     // glfwWindowShouldClose checks if the window has been instruted to close
     while (!glfwWindowShouldClose(window)) {
-        processInput(window);
+        processInput(window, stream);
 
         // Render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -175,8 +233,10 @@ int main(int argc, char* argv[]) {
         projectionShader.setMat4("projection", projection);  // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         projectionShader.setMat4("view", view);
 
-        float cTime = glfwGetTime();
-        heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime * 3) + sin(cTime * 0.7) + sin(cTime * 2.1));
+        // float cTime = glfwGetTime();
+        // heights[heightIndices[0]] = abs(sin(cTime) + sin(cTime * 3) + sin(cTime * 0.7) + sin(cTime * 2.1));
+        float noramlizedSample = ((float)(left + right)) / (2.0f * SHRT_MAX); 
+        heights[heightIndices[0]] = abs(noramlizedSample);
 
         for (int i = 0; i < numBars; ++i) {
             float height = heights[heightIndices[i]] * decayFactors[i];
@@ -201,6 +261,15 @@ int main(int argc, char* argv[]) {
         glfwPollEvents();
     }
 
+    err = Pa_CloseStream(stream);
+    if (err != paNoError) {
+        return portAudioError(err);
+    }
+
+    Pa_Terminate();
+
+    sf_close(wavFile);
+
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
 
@@ -208,14 +277,4 @@ int main(int argc, char* argv[]) {
     glfwTerminate();
 
     return 0;
-}
-
-void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
-}
-
-void processInput(GLFWwindow* window) {
-    // glfwGetKey will return GLFW_RELEASE if escape is NOT being pressed
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
 }

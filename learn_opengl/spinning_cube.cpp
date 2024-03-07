@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <string>
 
 #include "ShaderProgram.h"
 #include "cube_model.h"
@@ -19,7 +20,15 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 void processInput(GLFWwindow* window);
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Check correct # of args
+    if (argc != 2) {
+        // argv[0] is the program name
+        std::cerr << "Usage: " << argv[0] << " <shader_directory>" << std::endl;
+        return -1;
+    }
+    std::string shaderDirectory = argv[1];
+
     glfwInit();
 
     // Use OpenGL version 3.3
@@ -63,7 +72,9 @@ int main() {
     // Globals
     glEnable(GL_DEPTH_TEST);
 
-    ShaderProgram projectionShader("shaders/projection.vs", "shaders/passthru.fs");
+    std::string vertexShaderSource = shaderDirectory + "/projection.vs";
+    std::string fragmentShaderSource = shaderDirectory + "/passthru.fs";
+    ShaderProgram projectionShader(vertexShaderSource.c_str(), fragmentShaderSource.c_str());
 
     // Generate vertex array object
     unsigned int vao;

@@ -13,8 +13,9 @@ target_link_libraries(
     PRIVATE CubeModel
     )
 
+message(STATUS "SHADER" ${shader_directory})
 add_custom_target(run_spinning_cube
-    COMMAND spinning_cube
+    COMMAND spinning_cube "${shader_directory}"
 )
 
 add_executable(wave_of_cubes wave_of_cubes.cpp)
@@ -29,5 +30,5 @@ target_link_libraries(
     )
 
 add_custom_target(run_wave_of_cubes
-    COMMAND wave_of_cubes
+    COMMAND wave_of_cubes "${shader_directory}"
 )
