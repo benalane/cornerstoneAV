@@ -17,11 +17,17 @@ set(BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 
+# Options for portaudio
+set(PA_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(PA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(PA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
 # Add external dependencies
 add_subdirectory(deps/glfw)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/sndfile)
+add_subdirectory(deps/portaudio)
 
 # Add my modules
 add_subdirectory(learn_opengl)

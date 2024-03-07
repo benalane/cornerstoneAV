@@ -7,3 +7,6 @@
 [submodule "deps/sndfile"]
 	path = deps/sndfile
 	url = https://github.com/libsndfile/libsndfile
+[submodule "deps/portaudio"]
+	path = deps/portaudio
+	url = https://github.com/PortAudio/portaudio

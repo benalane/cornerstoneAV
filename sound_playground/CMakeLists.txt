@@ -2,14 +2,25 @@ add_executable(
     sndfile_open_test 
     sndfile_open_test.cpp
 )
-
 target_link_libraries(
     sndfile_open_test
     PRIVATE sndfile
 )
-
 add_custom_target(run_sndfile_open_test
     COMMAND sndfile_open_test ./redbone.wav
+)
+
+add_executable(
+    portaudio_play_music_test
+    portaudio_play_music_test.cpp
+)
+target_link_libraries(
+    portaudio_play_music_test
+    PRIVATE sndfile
+    PRIVATE PortAudio
+)
+add_custom_target(run_portaudio_play_music_test
+    COMMAND portaudio_play_music_test ./redbone.wav
 )
 
 # Move shader files into directory
