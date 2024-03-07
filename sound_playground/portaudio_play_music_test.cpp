@@ -10,7 +10,7 @@ output_cb(const void* input,
           const PaStreamCallbackTimeInfo* time_info,
           PaStreamCallbackFlags flags,
           void* data) {
-    SNDFILE* file = (SNDFILE*) data;
+    SNDFILE* file = (SNDFILE*)data;
 
     /* this should not actually be done inside of the stream callback
      * but in an own working thread
@@ -18,7 +18,7 @@ output_cb(const void* input,
      * Note although I haven't tested it for stereo I think you have
      * to multiply frames_per_buffer with the channel count i.e. 2 for
      * stereo */
-    sf_read_short(file, (short*) output, 2 * frames_per_buffer);
+    sf_read_short(file, (short*)output, 2 * frames_per_buffer);
     return paContinue;
 }
 
@@ -70,8 +70,8 @@ int main(int argc, char* argv[]) {
     outputParameters.hostApiSpecificStreamInfo = nullptr;
 
     err = Pa_OpenStream(&stream, NULL, &outputParameters, sfinfo.samplerate,
-            paFramesPerBufferUnspecified, paNoFlag,
-            output_cb, wavFile);
+                        paFramesPerBufferUnspecified, paNoFlag,
+                        output_cb, wavFile);
     if (err != paNoError) {
         return portAudioError(err);
     }
