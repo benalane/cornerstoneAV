@@ -30,5 +30,4 @@ add_subdirectory(deps/sndfile)
 add_subdirectory(deps/portaudio)
 
 # Add my modules
-add_subdirectory(learn_opengl)
-add_subdirectory(sound_playground)
+add_subdirectory(playground)
